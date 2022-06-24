@@ -437,6 +437,7 @@ no_packet:
 
         if (end || av_log2(pd->buf_size) != av_log2(pd->buf_size - pkt->size)) {
             int score = set_codec_from_probe_data(s, st, pd);
+			sti->probe_cnt++;
             if (    (st->codecpar->codec_id != AV_CODEC_ID_NONE && score > AVPROBE_SCORE_STREAM_RETRY)
                 || end) {
                 pd->buf_size = 0;
@@ -447,6 +448,12 @@ no_packet:
                 } else
                     av_log(s, AV_LOG_WARNING, "probed stream %d failed\n", st->index);
             }
+
+			//probe超过4次则不再probe，避免拉流卡太久
+			if(sti->probe_cnt >= 4) {
+				sti->request_probe = -1;
+				av_log(s, AV_LOG_WARNING, "probed stream %d failed\n", st->index);
+			}
             force_codec_ids(s, st);
         }
     }
