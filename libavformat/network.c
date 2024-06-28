@@ -18,7 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "config.h"
 #include "config_components.h"
+
+#if CONFIG_TLS_PROTOCOL && CONFIG_OPENSSL
+#include <openssl/opensslv.h>
+#endif
 
 #include <fcntl.h>
 #include "network.h"
@@ -31,7 +36,7 @@
 int ff_tls_init(void)
 {
 #if CONFIG_TLS_PROTOCOL
-#if CONFIG_OPENSSL
+#if CONFIG_OPENSSL && OPENSSL_VERSION_NUMBER < 0x10100000L
     int ret;
     if ((ret = ff_openssl_init()) < 0)
         return ret;
@@ -46,7 +51,7 @@ int ff_tls_init(void)
 void ff_tls_deinit(void)
 {
 #if CONFIG_TLS_PROTOCOL
-#if CONFIG_OPENSSL
+#if CONFIG_OPENSSL && OPENSSL_VERSION_NUMBER < 0x10100000L
     ff_openssl_deinit();
 #endif
 #if CONFIG_GNUTLS
@@ -356,7 +361,7 @@ struct ConnectionAttempt {
 static int start_connect_attempt(struct ConnectionAttempt *attempt,
                                  struct addrinfo **ptr, int timeout_ms,
                                  URLContext *h,
-                                 void (*customize_fd)(void *, int), void *customize_ctx)
+                                 int (*customize_fd)(void *, int, int), void *customize_ctx)
 {
     struct addrinfo *ai = *ptr;
     int ret;
@@ -371,8 +376,14 @@ static int start_connect_attempt(struct ConnectionAttempt *attempt,
 
     ff_socket_nonblock(attempt->fd, 1);
 
-    if (customize_fd)
-        customize_fd(customize_ctx, attempt->fd);
+    if (customize_fd) {
+        ret = customize_fd(customize_ctx, attempt->fd, ai->ai_family);
+        if (ret) {
+            closesocket(attempt->fd);
+            attempt->fd = -1;
+            return ret;
+        }
+    }
 
     while ((ret = connect(attempt->fd, ai->ai_addr, ai->ai_addrlen))) {
         ret = ff_neterrno();
@@ -402,7 +413,7 @@ static int start_connect_attempt(struct ConnectionAttempt *attempt,
 
 int ff_connect_parallel(struct addrinfo *addrs, int timeout_ms_per_address,
                         int parallel, URLContext *h, int *fd,
-                        void (*customize_fd)(void *, int), void *customize_ctx)
+                        int (*customize_fd)(void *, int, int), void *customize_ctx)
 {
     struct ConnectionAttempt attempts[3];
     struct pollfd pfd[3];

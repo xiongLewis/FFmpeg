@@ -147,7 +147,7 @@ uint32_t ff_opus_rc_get_raw(OpusRangeCoder *rc, uint32_t count)
         rc->rb.bytes--;
     }
 
-    value = av_mod_uintp2(rc->rb.cacheval, count);
+    value = av_zero_extend(rc->rb.cacheval, count);
     rc->rb.cacheval    >>= count;
     rc->rb.cachelen     -= count;
     rc->total_bits      += count;
@@ -163,7 +163,7 @@ void ff_opus_rc_put_raw(OpusRangeCoder *rc, uint32_t val, uint32_t count)
     const int to_write = FFMIN(32 - rc->rb.cachelen, count);
 
     rc->total_bits += count;
-    rc->rb.cacheval |= av_mod_uintp2(val, to_write) << rc->rb.cachelen;
+    rc->rb.cacheval |= av_zero_extend(val, to_write) << rc->rb.cachelen;
     rc->rb.cachelen = (rc->rb.cachelen + to_write) % 32;
 
     if (!rc->rb.cachelen && count) {
@@ -171,7 +171,7 @@ void ff_opus_rc_put_raw(OpusRangeCoder *rc, uint32_t val, uint32_t count)
         rc->rb.bytes    += 4;
         rc->rb.position -= 4;
         rc->rb.cachelen = count - to_write;
-        rc->rb.cacheval = av_mod_uintp2(val >> to_write, rc->rb.cachelen);
+        rc->rb.cacheval = av_zero_extend(val >> to_write, rc->rb.cachelen);
         av_assert0(rc->rng_cur < rc->rb.position);
     }
 }
@@ -390,7 +390,7 @@ void ff_opus_rc_enc_end(OpusRangeCoder *rc, uint8_t *dst, int size)
         int i, lap;
         uint8_t *rb_src, *rb_dst;
         ff_opus_rc_put_raw(rc, 0, 32 - rc->rb.cachelen);
-        rb_src = rc->buf + OPUS_MAX_PACKET_SIZE + 12 - rc->rb.bytes;
+        rb_src = rc->buf + OPUS_MAX_FRAME_SIZE + 12 - rc->rb.bytes;
         rb_dst = dst + FFMAX(size - rc->rb.bytes, 0);
         lap = &dst[rng_bytes] - rb_dst;
         for (i = 0; i < lap; i++)
@@ -407,5 +407,5 @@ void ff_opus_rc_enc_init(OpusRangeCoder *rc)
     rc->rem = -1;
     rc->ext =  0;
     rc->rng_cur = rc->buf;
-    ff_opus_rc_dec_raw_init(rc, rc->buf + OPUS_MAX_PACKET_SIZE + 8, 0);
+    ff_opus_rc_dec_raw_init(rc, rc->buf + OPUS_MAX_FRAME_SIZE + 8, 0);
 }

@@ -1101,7 +1101,7 @@ const float ff_celt_postfilter_taps[3][3] = {
     { 0.7998046875f, 0.1000976562f, 0.0           }
 };
 
-DECLARE_ALIGNED(32, static const float, ff_celt_window_padded)[136] = {
+DECLARE_ALIGNED(32, const float, ff_celt_window_padded)[136] = {
     0.00000000f, 0.00000000f, 0.00000000f, 0.00000000f,
     0.00000000f, 0.00000000f, 0.00000000f, 0.00000000f,
     6.7286966e-05f, 0.00060551348f, 0.0016815970f, 0.0032947962f, 0.0054439943f,
@@ -1132,8 +1132,6 @@ DECLARE_ALIGNED(32, static const float, ff_celt_window_padded)[136] = {
     1.00000000f, 1.00000000f, 1.00000000f,
 };
 
-const float *const ff_celt_window = &ff_celt_window_padded[8];
-
 /* square of the window, used for the postfilter */
 const float ff_celt_window2[120] = {
     4.5275357e-09f, 3.66647e-07f, 2.82777e-06f, 1.08557e-05f, 2.96371e-05f, 6.60594e-05f,
@@ -1160,4 +1158,32 @@ const uint32_t * const ff_celt_pvq_u_row[15] = {
     celt_pvq_u + 1041, celt_pvq_u + 1131, celt_pvq_u + 1178,
     celt_pvq_u + 1207, celt_pvq_u + 1226, celt_pvq_u + 1240,
     celt_pvq_u + 1248, celt_pvq_u + 1254, celt_pvq_u + 1257
+};
+
+/* Deemphasis constant (alpha_p), as specified in RFC6716 as 0.8500061035.
+ * libopus uses a slighly rounded constant, set to 0.85 exactly,
+ * to simplify its fixed-point version, but it's not significant to impact
+ * compliance. */
+#define CELT_EMPH_COEFF 0.8500061035
+
+DECLARE_ALIGNED(16, const float, ff_opus_deemph_weights)[] = {
+    CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF*CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+
+    0,
+    CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+
+    0,
+    0,
+    CELT_EMPH_COEFF,
+    CELT_EMPH_COEFF*CELT_EMPH_COEFF,
+
+    0,
+    0,
+    0,
+    CELT_EMPH_COEFF,
 };

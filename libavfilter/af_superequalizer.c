@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/mem.h"
 #include "libavutil/opt.h"
 #include "libavutil/tx.h"
 
@@ -225,7 +226,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
             fsamples_out[i*2+1] = im;
         }
 
-        s->itx_fn(s->irdft, fsamples, fsamples_out, sizeof(float));
+        s->itx_fn(s->irdft, fsamples, fsamples_out, sizeof(AVComplexFloat));
 
         for (i = 0; i < s->winlen; i++)
             dst[i] += fsamples[i] / s->tabsize;

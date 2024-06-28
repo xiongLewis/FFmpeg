@@ -29,8 +29,8 @@
 #include "libavutil/internal.h"
 #include "libavutil/intreadwrite.h"
 #include "libavutil/lfg.h"
+#include "libavutil/mem.h"
 #include "libavutil/opt.h"
-#include "libavutil/parseutils.h"
 #include "libavutil/random_seed.h"
 #include "libavutil/avstring.h"
 #include "avfilter.h"
@@ -404,6 +404,7 @@ static int request_frame(AVFilterLink *outlink)
         return AVERROR(ENOMEM);
     picref->sample_aspect_ratio = (AVRational) {1, 1};
     picref->pts = life->pts++;
+    picref->duration = 1;
 
     life->draw(outlink->src, picref);
     evolve(outlink->src);

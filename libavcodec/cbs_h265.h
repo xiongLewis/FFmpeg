@@ -24,7 +24,8 @@
 
 #include "cbs_h2645.h"
 #include "cbs_sei.h"
-#include "hevc.h"
+
+#include "hevc/hevc.h"
 
 typedef struct H265RawNALUnitHeader {
     uint8_t nal_unit_type;
@@ -681,12 +682,9 @@ typedef struct CodedBitstreamH265Context {
 
     // All currently available parameter sets.  These are updated when
     // any parameter set NAL unit is read/written with this context.
-    AVBufferRef *vps_ref[HEVC_MAX_VPS_COUNT];
-    AVBufferRef *sps_ref[HEVC_MAX_SPS_COUNT];
-    AVBufferRef *pps_ref[HEVC_MAX_PPS_COUNT];
-    H265RawVPS *vps[HEVC_MAX_VPS_COUNT];
-    H265RawSPS *sps[HEVC_MAX_SPS_COUNT];
-    H265RawPPS *pps[HEVC_MAX_PPS_COUNT];
+    H265RawVPS *vps[HEVC_MAX_VPS_COUNT]; ///< RefStruct references
+    H265RawSPS *sps[HEVC_MAX_SPS_COUNT]; ///< RefStruct references
+    H265RawPPS *pps[HEVC_MAX_PPS_COUNT]; ///< RefStruct references
 
     // The currently active parameter sets.  These are updated when any
     // NAL unit refers to the relevant parameter set.  These pointers
